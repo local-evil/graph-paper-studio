@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graph Paper Studio — Custom PDF Grid Generator</title>
+<meta name="description" content="Design and preview custom graph, dot, ruled, or isometric paper, then export a print-ready PDF.">
+<style>
+  :root{
+    --bg:#f4f5f8;
+    --panel:#ffffff;
+    --panel-border:#e4e6ec;
+    --text:#1c1e26;
+    --text-dim:#6b7080;
+    --accent:#5b5bf0;
+    --accent-hover:#4747d8;
+    --accent-soft:#eceaff;
+    --input-bg:#ffffff;
+    --input-border:#d8dae2;
+    --shadow:0 1px 2px rgba(20,20,40,.04), 0 8px 24px rgba(20,20,40,.06);
+    --canvas-shadow:0 10px 40px rgba(20,20,40,.18), 0 2px 8px rgba(20,20,40,.08);
+    --radius:12px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  [data-theme="dark"]{
+    --bg:#15161c;
+    --panel:#1c1e27;
+    --panel-border:#2b2d3a;
+    --text:#eceef5;
+    --text-dim:#9297ab;
+    --accent:#7c7cf7;
+    --accent-hover:#9191fa;
+    --accent-soft:#2a2a4a;
+    --input-bg:#20222d;
+    --input-border:#33354430;
+    --input-border:#383b4c;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    --canvas-shadow:0 10px 50px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:var(--sans);
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:360px;
+    min-width:360px;
+    background:var(--panel);
+    border-right:1px solid var(--panel-border);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .sidebar-header{
+    padding:20px 22px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid var(--panel-border);
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-mark{
+    width:28px;height:28px;border-radius:8px;
+    background:linear-gradient(135deg,var(--accent),#9d7cf7);
+    flex-shrink:0;
+  }
+  .brand-text h1{
+    font-size:15px;
+    margin:0;
+    font-weight:650;
+    letter-spacing:-.01em;
+  }
+  .brand-text p{
+    margin:0;
+    font-size:11.5px;
+    color:var(--text-dim);
+  }
+  .theme-toggle{
+    width:34px;height:34px;
+    border-radius:9px;
+    border:1px solid var(--panel-border);
+    background:var(--bg);
+    color:var(--text);
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;
+    transition:background .15s;
+  }
+  .theme-toggle:hover{background:var(--accent-soft);}
+
+  .controls{
+    flex:1;
+    overflow-y:auto;
+    padding:18px 22px 90px;
+  }
+  .controls::-webkit-scrollbar{width:8px;}
+  .controls::-webkit-scrollbar-thumb{background:var(--panel-border);border-radius:4px;}
+
+  section.group{
+    margin-bottom:22px;
+  }
+  section.group h2{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--text-dim);
+    margin:0 0 10px;
+    font-weight:650;
+  }
+  .row{
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .row > *{flex:1;min-width:0;}
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    margin-bottom:10px;
+  }
+  .field label{
+    font-size:12px;
+    color:var(--text-dim);
+    font-weight:550;
+  }
+  .field-inline{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .field-inline label{
+    font-size:12.5px;
+    font-weight:550;
+    color:var(--text);
+  }
+
+  input[type="text"],input[type="number"],select{
+    width:100%;
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid var(--input-border);
+    background:var(--input-bg);
+    color:var(--text);
+    font-size:13px;
+    font-family:var(--sans);
+    outline:none;
+    transition:border-color .12s, box-shadow .12s;
+  }
+  input[type="text"]:focus,input[type="number"]:focus,select:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  input[disabled]{opacity:.5;cursor:not-allowed;}
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239297ab'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:26px;}
+
+  .unit-toggle{
+    display:flex;
+    border:1px solid var(--input-border);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .unit-toggle button{
+    flex:1;
+    padding:7px 0;
+    background:var(--input-bg);
+    border:none;
+    color:var(--text-dim);
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .unit-toggle button.active{
+    background:var(--accent);
+    color:#fff;
+  }
+
+  .chip-row{display:flex;gap:6px;}
+  .chip{
+    padding:6px 10px;
+    border-radius:20px;
+    border:1px solid var(--input-border);
+    background:var(--input-bg);
+    color:var(--text-dim);
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .chip.active{
+    background:var(--accent-soft);
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+
+  .color-field{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    border:1px solid var(--input-border);
+    border-radius:8px;
+    padding:5px 8px;
+    background:var(--input-bg);
+  }
+  .color-field input[type="color"]{
+    width:26px;height:26px;
+    border:none;
+    padding:0;
+    background:none;
+    cursor:pointer;
+    border-radius:6px;
+    overflow:hidden;
+  }
+  .color-field input[type="text"]{
+    border:none;
+    padding:2px 0;
+    font-family:var(--mono);
+    font-size:12.5px;
+  }
+  .color-field input[type="text"]:focus{box-shadow:none;}
+
+  .switch{
+    position:relative;
+    width:38px;height:22px;
+    flex-shrink:0;
+  }
+  .switch input{opacity:0;width:0;height:0;position:absolute;}
+  .switch .track{
+    position:absolute;inset:0;
+    background:var(--input-border);
+    border-radius:20px;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .switch .track::after{
+    content:"";
+    position:absolute;
+    width:16px;height:16px;
+    left:3px;top:3px;
+    background:#fff;
+    border-radius:50%;
+    transition:transform .15s;
+    box-shadow:0 1px 3px rgba(0,0,0,.3);
+  }
+  .switch input:checked + .track{background:var(--accent);}
+  .switch input:checked + .track::after{transform:translateX(16px);}
+
+  .link-btn{
+    width:30px;height:30px;
+    border-radius:7px;
+    border:1px solid var(--input-border);
+    background:var(--input-bg);
+    color:var(--text-dim);
+    cursor:pointer;
+    font-size:13px;
+    flex-shrink:0;
+  }
+  .link-btn.active{
+    background:var(--accent-soft);
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+
+  .helper-text{
+    font-size:11.5px;
+    color:var(--text-dim);
+    margin-top:-4px;
+    margin-bottom:10px;
+  }
+  .computed-badge{
+    font-family:var(--mono);
+    font-size:11.5px;
+    background:var(--accent-soft);
+    color:var(--accent);
+    padding:6px 10px;
+    border-radius:7px;
+    display:inline-block;
+  }
+
+  .btn{
+    width:100%;
+    padding:11px 14px;
+    border-radius:9px;
+    border:none;
+    font-size:13.5px;
+    font-weight:650;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    transition:background .15s, transform .05s;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-hover);}
+  .btn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--input-border);}
+  .btn-secondary:hover{background:var(--accent-soft);}
+  .btn-row{display:flex;gap:8px;margin-bottom:8px;}
+  .btn-row .btn{margin-bottom:0;}
+
+  .recent-card{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:7px;
+    border:1px solid var(--panel-border);
+    border-radius:9px;
+    margin-bottom:7px;
+    cursor:pointer;
+    background:var(--input-bg);
+    transition:border-color .12s, background .12s;
+  }
+  .recent-card:hover{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .recent-thumb{
+    width:34px;
+    height:44px;
+    object-fit:contain;
+    background:#fff;
+    border:1px solid var(--panel-border);
+    border-radius:4px;
+    flex-shrink:0;
+  }
+  .recent-meta{
+    flex:1;
+    min-width:0;
+  }
+  .recent-label{
+    font-size:12px;
+    font-weight:600;
+    color:var(--text);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .recent-time{
+    font-size:11px;
+    color:var(--text-dim);
+    margin-top:2px;
+  }
+  .recent-del{
+    width:22px;height:22px;
+    flex-shrink:0;
+    border:none;
+    background:transparent;
+    color:var(--text-dim);
+    font-size:15px;
+    line-height:1;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .recent-del:hover{
+    background:var(--panel-border);
+    color:var(--text);
+  }
+
+  .action-bar{
+    position:sticky;
+    bottom:0;
+    background:linear-gradient(to top, var(--panel) 60%, transparent);
+    padding:16px 0 0;
+    margin-top:-70px;
+  }
+
+  /* ---------- Preview ---------- */
+  .preview-wrap{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .preview-top{
+    padding:16px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid var(--panel-border);
+  }
+  .preview-top .info{
+    font-size:12.5px;
+    color:var(--text-dim);
+  }
+  .preview-top .info b{color:var(--text);}
+  .zoom-controls{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .zoom-controls button{
+    width:28px;height:28px;
+    border-radius:7px;
+    border:1px solid var(--input-border);
+    background:var(--panel);
+    color:var(--text);
+    cursor:pointer;
+    font-size:14px;
+  }
+  .zoom-controls span{font-size:12px;color:var(--text-dim);min-width:40px;text-align:center;}
+
+  .preview-stage{
+    flex:1;
+    overflow:auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:40px;
+    background:
+      radial-gradient(circle at 1px 1px, var(--panel-border) 1px, transparent 0) 0 0/22px 22px;
+  }
+  #paperCanvas{
+    box-shadow:var(--canvas-shadow);
+    background:#fff;
+    border-radius:2px;
+  }
+
+  .toast{
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--text);
+    color:var(--bg);
+    padding:10px 18px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:550;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s, transform .2s;
+    z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:820px){
+    .app{flex-direction:column;height:auto;}
+    .sidebar{width:100%;min-width:0;border-right:none;border-bottom:1px solid var(--panel-border);}
+    .preview-stage{padding:20px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div class="brand-text">
+          <h1>Graph Paper Studio</h1>
+          <p>Custom printable paper, exported as PDF</p>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+    </div>
+
+    <div class="controls">
+
+      <section class="group">
+        <h2>Paper</h2>
+        <div class="field">
+          <label for="paperPreset">Size</label>
+          <select id="paperPreset">
+            <option value="Letter">Letter — 8.5 × 11 in</option>
+            <option value="A4">A4 — 210 × 297 mm</option>
+            <option value="A3">A3 — 297 × 420 mm</option>
+            <option value="Custom">Custom…</option>
+          </select>
+        </div>
+        <div class="row" id="customSizeRow" style="display:none;">
+          <div class="field">
+            <label for="customW">Width</label>
+            <input type="number" id="customW" min="1" step="0.01">
+          </div>
+          <div class="field">
+            <label for="customH">Height</label>
+            <input type="number" id="customH" min="1" step="0.01">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Orientation</label>
+            <div class="unit-toggle">
+              <button data-orientation="portrait" id="orientPortrait">Portrait</button>
+              <button data-orientation="landscape" id="orientLandscape">Landscape</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Units</label>
+            <div class="unit-toggle">
+              <button data-unit="in" id="unitIn">inches</button>
+              <button data-unit="cm" id="unitCm">cm</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Margins</h2>
+        <div class="row">
+          <div class="field">
+            <label for="marginTop">Top</label>
+            <input type="number" id="marginTop" min="0" step="0.01">
+          </div>
+          <div class="field">
+            <label for="marginRight">Right</label>
+            <input type="number" id="marginRight" min="0" step="0.01">
+          </div>
+          <button class="link-btn active" id="linkMargins" title="Link all margins">🔗</button>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="marginBottom">Bottom</label>
+            <input type="number" id="marginBottom" min="0" step="0.01">
+          </div>
+          <div class="field">
+            <label for="marginLeft">Left</label>
+            <input type="number" id="marginLeft" min="0" step="0.01">
+          </div>
+          <div style="width:30px;flex:0 0 30px;"></div>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Grid</h2>
+        <div class="field">
+          <label for="gridStyle">Style</label>
+          <select id="gridStyle">
+            <option value="square">Square grid</option>
+            <option value="dot">Dot grid</option>
+            <option value="lined">Ruled / lined</option>
+            <option value="isometric">Isometric</option>
+          </select>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="gridSize" id="gridSizeLabel">Square size</label>
+            <input type="number" id="gridSize" min="0.05" step="0.01">
+          </div>
+          <div class="field" id="dotRadiusField" style="display:none;">
+            <label for="dotRadius">Dot size (pt)</label>
+            <input type="number" id="dotRadius" min="0.2" step="0.1">
+          </div>
+        </div>
+        <div class="field">
+          <label>Line weight (pt)</label>
+          <div class="chip-row">
+            <button class="chip" data-weight="0.35">Fine</button>
+            <button class="chip" data-weight="0.75">Medium</button>
+            <button class="chip" data-weight="1.5">Heavy</button>
+            <input type="number" id="lineWeight" min="0.1" step="0.05" style="max-width:70px;">
+          </div>
+        </div>
+        <div class="field">
+          <label>Grid color</label>
+          <div class="color-field">
+            <input type="color" id="gridColorPicker">
+            <input type="text" id="gridColorHex" maxlength="7">
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Grid Count</h2>
+        <div class="field-inline">
+          <label for="autoFill">Auto-fill margins</label>
+          <label class="switch">
+            <input type="checkbox" id="autoFill" checked>
+            <span class="track"></span>
+          </label>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="colsInput">Across</label>
+            <input type="number" id="colsInput" min="1" step="1">
+          </div>
+          <div class="field">
+            <label for="rowsInput">Down</label>
+            <input type="number" id="rowsInput" min="1" step="1">
+          </div>
+        </div>
+        <div class="computed-badge" id="computedBadge">— × —</div>
+      </section>
+
+      <section class="group">
+        <h2>Border Frame</h2>
+        <div class="field-inline">
+          <label for="borderEnabled">Show border</label>
+          <label class="switch">
+            <input type="checkbox" id="borderEnabled">
+            <span class="track"></span>
+          </label>
+        </div>
+        <div id="borderOptions" style="display:none;">
+          <div class="field">
+            <label>Border weight (pt)</label>
+            <div class="chip-row">
+              <button class="chip" data-borderweight="1">Thin</button>
+              <button class="chip" data-borderweight="2.5">Medium</button>
+              <button class="chip" data-borderweight="5">Thick</button>
+              <input type="number" id="borderWeight" min="0.25" step="0.25" style="max-width:70px;">
+            </div>
+          </div>
+          <div class="field-inline">
+            <label for="borderMatch">Match grid color</label>
+            <label class="switch">
+              <input type="checkbox" id="borderMatch" checked>
+              <span class="track"></span>
+            </label>
+          </div>
+          <div class="field" id="borderColorField" style="display:none;">
+            <label>Border color</label>
+            <div class="color-field">
+              <input type="color" id="borderColorPicker">
+              <input type="text" id="borderColorHex" maxlength="7">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Background</h2>
+        <div class="field">
+          <label>Page color</label>
+          <div class="color-field">
+            <input type="color" id="bgColorPicker">
+            <input type="text" id="bgColorHex" maxlength="7">
+          </div>
+        </div>
+      </section>
+
+      <section class="group">
+        <div class="field-inline" style="margin-bottom:10px;">
+          <h2 style="margin:0;">Recent Papers</h2>
+          <button class="chip" id="recentsClear" style="display:none;">Clear all</button>
+        </div>
+        <p class="helper-text" id="recentsEmpty" style="margin-top:0;">Papers you download will show up here.</p>
+        <div id="recentsList"></div>
+      </section>
+
+    </div>
+
+    <div class="controls" style="flex:0 0 auto;padding:14px 22px 20px;border-top:1px solid var(--panel-border);">
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="resetBtn">Reset</button>
+        <button class="btn btn-secondary" id="shareBtn">Copy link</button>
+      </div>
+      <button class="btn btn-primary" id="downloadBtn">⬇ Download PDF</button>
+    </div>
+  </aside>
+
+  <div class="preview-wrap">
+    <div class="preview-top">
+      <div class="info"><b id="paperSizeInfo">Letter</b> · <span id="paperDimsInfo"></span></div>
+      <div class="zoom-controls">
+        <button id="zoomOut">–</button>
+        <span id="zoomLabel">Fit</span>
+        <button id="zoomIn">+</button>
+      </div>
+    </div>
+    <div class="preview-stage" id="previewStage">
+      <canvas id="paperCanvas"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ============ Constants ============ */
+  var IN_PER_CM = 1/2.54;
+  var PT_PER_IN = 72;
+  var PAPER_SIZES = {
+    Letter: [8.5, 11],
+    A4: [8.27, 11.69],
+    A3: [11.69, 16.54]
+  };
+  var DEFAULTS = {
+    paperPreset: "Letter",
+    orientation: "portrait",
+    customWIn: 8.5,
+    customHIn: 11,
+    unit: "in",
+    marginTopIn: 0.5, marginRightIn: 0.5, marginBottomIn: 0.5, marginLeftIn: 0.5,
+    marginsLinked: true,
+    style: "square",
+    gridSizeIn: 0.25,
+    dotRadiusPt: 1.5,
+    lineWeightPt: 0.75,
+    gridColor: "#8fb8e0",
+    autoFill: true,
+    cols: 30,
+    rows: 40,
+    borderEnabled: false,
+    borderWeightPt: 2.5,
+    borderMatch: true,
+    borderColor: "#333333",
+    bgColor: "#ffffff"
+  };
+
+  var state = JSON.parse(JSON.stringify(DEFAULTS));
+  var zoom = null; // null = fit
+  var lastGeo = null;
+
+  /* ============ Helpers ============ */
+  function $(id){ return document.getElementById(id); }
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+  // Sets an input's value, but never while the user is actively typing in
+  // it — otherwise re-formatting the value mid-keystroke (e.g. after every
+  // character) resets the cursor to the end and can eat characters like ".".
+  function setVal(id, val){
+    var el = $(id);
+    if(document.activeElement === el) return;
+    var s = String(val);
+    if(el.value !== s) el.value = s;
+  }
+  function toDisplay(valIn){ return state.unit === "in" ? valIn : valIn / IN_PER_CM; }
+  function fromDisplay(val){ return state.unit === "in" ? val : val * IN_PER_CM; }
+  function round(v,d){ var m=Math.pow(10,d); return Math.round(v*m)/m; }
+  function fmt(v){ return round(v, state.unit === "in" ? 3 : 2); }
+
+  function hexToRgb(hex){
+    var h = hex.replace("#","");
+    if(h.length===3){ h = h.split("").map(function(c){return c+c;}).join(""); }
+    var num = parseInt(h,16);
+    return [(num>>16)&255, (num>>8)&255, num&255];
+  }
+  function isValidHex(hex){ return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex); }
+
+  function effectivePaperIn(){
+    var w,h;
+    if(state.paperPreset === "Custom"){ w = state.customWIn; h = state.customHIn; }
+    else { var p = PAPER_SIZES[state.paperPreset]; w=p[0]; h=p[1]; }
+    if(state.orientation === "landscape"){ var t=w; w=Math.max(w,h); h=Math.min(t,h); if(w<h){var s=w;w=h;h=s;} }
+    // ensure orientation matches: portrait => h>=w, landscape => w>=h
+    if(state.orientation === "portrait" && w>h){ var s2=w; w=h; h=s2; }
+    if(state.orientation === "landscape" && h>w){ var s3=w; w=h; h=s3; }
+    return [w,h];
+  }
+
+  /* ============ Geometry (canonical inches) ============ */
+  function diagonalFamily(angleDeg, spacing, x0,y0,w,h){
+    var rad = angleDeg*Math.PI/180;
+    var dx = Math.cos(rad), dy = Math.sin(rad);
+    var nx = -dy, ny = dx;
+    var corners = [[x0,y0],[x0+w,y0],[x0,y0+h],[x0+w,y0+h]];
+    var projs = corners.map(function(c){ return c[0]*nx + c[1]*ny; });
+    var minP = Math.min.apply(null,projs), maxP = Math.max.apply(null,projs);
+    var lines = [];
+    var start = Math.ceil(minP/spacing)*spacing;
+    for(var p=start; p<=maxP+1e-9; p+=spacing){
+      var baseX = p*nx, baseY = p*ny;
+      var tmin=-1e6, tmax=1e6;
+      if(Math.abs(dx) > 1e-9){
+        var t1=(x0-baseX)/dx, t2=(x0+w-baseX)/dx;
+        tmin=Math.max(tmin,Math.min(t1,t2)); tmax=Math.min(tmax,Math.max(t1,t2));
+      } else if(baseX<x0-1e-9 || baseX>x0+w+1e-9){ continue; }
+      if(Math.abs(dy) > 1e-9){
+        var t3=(y0-baseY)/dy, t4=(y0+h-baseY)/dy;
+        tmin=Math.max(tmin,Math.min(t3,t4)); tmax=Math.min(tmax,Math.max(t3,t4));
+      } else if(baseY<y0-1e-9 || baseY>y0+h+1e-9){ continue; }
+      if(tmin>tmax) continue;
+      lines.push([baseX+dx*tmin, baseY+dy*tmin, baseX+dx*tmax, baseY+dy*tmax]);
+    }
+    return lines;
+  }
+
+  function buildGeometry(){
+    var paper = effectivePaperIn();
+    var paperWIn=paper[0], paperHIn=paper[1];
+    var mL=state.marginLeftIn, mR=state.marginRightIn, mT=state.marginTopIn, mB=state.marginBottomIn;
+    var areaW = Math.max(0, paperWIn - mL - mR);
+    var areaH = Math.max(0, paperHIn - mT - mB);
+    var spacing = Math.max(0.02, state.gridSizeIn);
+
+    var cols, rows;
+    if(state.autoFill){
+      cols = Math.max(1, Math.floor(areaW/spacing));
+      rows = Math.max(1, Math.floor(areaH/spacing));
+    } else {
+      cols = Math.max(1, Math.round(state.cols));
+      rows = Math.max(1, Math.round(state.rows));
+    }
+
+    // Intentionally not clamped: if cols/rows*spacing exceeds the printable
+    // area (e.g. a manual count or margin combo that overflows the page),
+    // the grid centers on the printable area and may extend into the
+    // margins/page edge. This keeps the line loop and centering offset
+    // consistent (WYSIWYG) and lets the preview show the overflow so the
+    // user can correct spacing/margins/count themselves.
+    var gridW = cols*spacing;
+    var gridH = rows*spacing;
+    var offsetX = mL + (areaW-gridW)/2;
+    var offsetY = mT + (areaH-gridH)/2;
+
+    var lines = [], dots = [];
+
+    if(state.style === "square"){
+      for(var i=0;i<=cols;i++){ var x=offsetX+i*spacing; lines.push([x,offsetY,x,offsetY+gridH]); }
+      for(var j=0;j<=rows;j++){ var y=offsetY+j*spacing; lines.push([offsetX,y,offsetX+gridW,y]); }
+    } else if(state.style === "dot"){
+      var r = state.dotRadiusPt/PT_PER_IN;
+      for(var di=0;di<=cols;di++){
+        for(var dj=0;dj<=rows;dj++){
+          dots.push([offsetX+di*spacing, offsetY+dj*spacing, r]);
+        }
+      }
+    } else if(state.style === "lined"){
+      for(var lj=0;lj<=rows;lj++){ var ly=offsetY+lj*spacing; lines.push([offsetX,ly,offsetX+gridW,ly]); }
+    } else if(state.style === "isometric"){
+      lines = lines.concat(diagonalFamily(90, spacing, offsetX, offsetY, gridW, gridH));
+      lines = lines.concat(diagonalFamily(30, spacing, offsetX, offsetY, gridW, gridH));
+      lines = lines.concat(diagonalFamily(150, spacing, offsetX, offsetY, gridW, gridH));
+    }
+
+    var border = null;
+    if(state.borderEnabled){
+      border = {
+        x: mL, y: mT, w: areaW, h: areaH,
+        weightIn: state.borderWeightPt/PT_PER_IN,
+        color: state.borderMatch ? state.gridColor : state.borderColor
+      };
+    }
+
+    return {
+      paperWIn: paperWIn, paperHIn: paperHIn,
+      lines: lines, dots: dots, border: border,
+      background: state.bgColor, gridColor: state.gridColor,
+      lineWeightIn: state.lineWeightPt/PT_PER_IN,
+      cols: cols, rows: rows
+    };
+  }
+
+  /* ============ Canvas render ============ */
+  // Draws a geometry object onto a 2D context at the given px-per-inch
+  // scale. Assumes the context's transform/origin is already set up by the
+  // caller (top-left = 0,0 in "scale" units). Shared by the live preview
+  // and the small recent-papers thumbnails so they always match.
+  function drawGeometryOnContext(ctx, geo, scale){
+    ctx.fillStyle = geo.background;
+    ctx.fillRect(0,0,geo.paperWIn*scale, geo.paperHIn*scale);
+
+    if(geo.lines.length){
+      var p = new Path2D();
+      for(var i=0;i<geo.lines.length;i++){
+        var l = geo.lines[i];
+        p.moveTo(l[0]*scale, l[1]*scale);
+        p.lineTo(l[2]*scale, l[3]*scale);
+      }
+      ctx.strokeStyle = geo.gridColor;
+      ctx.lineWidth = Math.max(0.5, geo.lineWeightIn*scale);
+      ctx.lineCap = "square";
+      ctx.stroke(p);
+    }
+    if(geo.dots.length){
+      var pd = new Path2D();
+      for(var k=0;k<geo.dots.length;k++){
+        var d = geo.dots[k];
+        pd.moveTo((d[0]+d[2])*scale, d[1]*scale);
+        pd.arc(d[0]*scale, d[1]*scale, d[2]*scale, 0, Math.PI*2);
+      }
+      ctx.fillStyle = geo.gridColor;
+      ctx.fill(pd);
+    }
+    if(geo.border){
+      ctx.strokeStyle = geo.border.color;
+      ctx.lineWidth = Math.max(0.5, geo.border.weightIn*scale);
+      ctx.strokeRect(geo.border.x*scale, geo.border.y*scale, geo.border.w*scale, geo.border.h*scale);
+    }
+  }
+
+  function renderCanvas(){
+    var geo = buildGeometry();
+    lastGeo = geo;
+    var canvas = $("paperCanvas");
+    var stage = $("previewStage");
+
+    var basePxPerIn = 96;
+    var fitScale = 1;
+    if(zoom === null){
+      var availW = stage.clientWidth - 80;
+      var availH = stage.clientHeight - 80;
+      var natW = geo.paperWIn*basePxPerIn, natH = geo.paperHIn*basePxPerIn;
+      fitScale = Math.min(availW/natW, availH/natH, 1.4);
+      fitScale = Math.max(fitScale, 0.08);
+    } else {
+      fitScale = zoom;
+    }
+    var scale = basePxPerIn * fitScale;
+    var dpr = window.devicePixelRatio || 1;
+
+    canvas.style.width = (geo.paperWIn*scale) + "px";
+    canvas.style.height = (geo.paperHIn*scale) + "px";
+    canvas.width = Math.round(geo.paperWIn*scale*dpr);
+    canvas.height = Math.round(geo.paperHIn*scale*dpr);
+
+    var ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,geo.paperWIn*scale, geo.paperHIn*scale);
+    drawGeometryOnContext(ctx, geo, scale);
+
+    $("zoomLabel").textContent = zoom === null ? "Fit" : Math.round(fitScale*100)+"%";
+    $("paperSizeInfo").textContent = state.paperPreset === "Custom" ? "Custom" : state.paperPreset;
+    $("paperDimsInfo").textContent = fmt(toDisplay(geo.paperWIn)) + " × " + fmt(toDisplay(geo.paperHIn)) + " " + state.unit;
+    $("computedBadge").textContent = geo.cols + " × " + geo.rows + " squares";
+  }
+
+  function renderThumbnail(geo){
+    var maxW = 60, maxH = 78;
+    var s = Math.min(maxW/geo.paperWIn, maxH/geo.paperHIn);
+    var c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(geo.paperWIn*s));
+    c.height = Math.max(1, Math.round(geo.paperHIn*s));
+    var ctx = c.getContext("2d");
+    drawGeometryOnContext(ctx, geo, s);
+    return c.toDataURL("image/png");
+  }
+
+  /* ============ PDF export ============ */
+  function exportPDF(){
+    var geo = buildGeometry();
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if(!jsPDFCtor){
+      showToast("PDF library failed to load — check your connection.");
+      return;
+    }
+    var doc = new jsPDFCtor({
+      unit: "pt",
+      format: [geo.paperWIn*PT_PER_IN, geo.paperHIn*PT_PER_IN]
+    });
+    var wPt = geo.paperWIn*PT_PER_IN, hPt = geo.paperHIn*PT_PER_IN;
+
+    var bg = hexToRgb(geo.background);
+    doc.setFillColor(bg[0],bg[1],bg[2]);
+    doc.rect(0,0,wPt,hPt,"F");
+
+    if(geo.lines.length){
+      var gc = hexToRgb(geo.gridColor);
+      doc.setDrawColor(gc[0],gc[1],gc[2]);
+      doc.setLineWidth(Math.max(0.25, geo.lineWeightIn*PT_PER_IN));
+      for(var i=0;i<geo.lines.length;i++){
+        var l = geo.lines[i];
+        doc.line(l[0]*PT_PER_IN, l[1]*PT_PER_IN, l[2]*PT_PER_IN, l[3]*PT_PER_IN);
+      }
+    }
+    if(geo.dots.length){
+      var gc2 = hexToRgb(geo.gridColor);
+      doc.setFillColor(gc2[0],gc2[1],gc2[2]);
+      for(var k=0;k<geo.dots.length;k++){
+        var d = geo.dots[k];
+        doc.circle(d[0]*PT_PER_IN, d[1]*PT_PER_IN, Math.max(d[2],0.01)*PT_PER_IN, "F");
+      }
+    }
+    if(geo.border){
+      var bc = hexToRgb(geo.border.color);
+      doc.setDrawColor(bc[0],bc[1],bc[2]);
+      doc.setLineWidth(Math.max(0.25, geo.border.weightIn*PT_PER_IN));
+      doc.rect(geo.border.x*PT_PER_IN, geo.border.y*PT_PER_IN, geo.border.w*PT_PER_IN, geo.border.h*PT_PER_IN, "S");
+    }
+
+    var name = "graph-paper-" + state.style + "-" + geo.cols + "x" + geo.rows + ".pdf";
+    doc.save(name);
+    addRecent(geo);
+  }
+
+  /* ============ Recent papers (localStorage) ============ */
+  var RECENTS_KEY = "gp_recents_v1";
+  var MAX_RECENTS = 12;
+
+  function loadRecents(){
+    try{
+      var raw = localStorage.getItem(RECENTS_KEY);
+      var list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch(e){ return []; }
+  }
+  function saveRecents(list){
+    try{ localStorage.setItem(RECENTS_KEY, JSON.stringify(list)); } catch(e){ /* storage full/unavailable */ }
+  }
+  function styleLabel(s){
+    return {square:"Square", dot:"Dot", lined:"Ruled", isometric:"Isometric"}[s] || s;
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function timeAgo(ts){
+    var diff = Math.max(0, Date.now()-ts);
+    var m = Math.floor(diff/60000);
+    if(m < 1) return "just now";
+    if(m < 60) return m + "m ago";
+    var h = Math.floor(m/60);
+    if(h < 24) return h + "h ago";
+    var d = Math.floor(h/24);
+    if(d < 30) return d + "d ago";
+    return new Date(ts).toLocaleDateString();
+  }
+
+  function addRecent(geo){
+    var label = (state.paperPreset === "Custom" ? "Custom" : state.paperPreset) + " · " +
+      styleLabel(state.style) + " · " + fmt(toDisplay(state.gridSizeIn)) + state.unit + " · " +
+      geo.cols + "×" + geo.rows;
+    var entry = {
+      id: Date.now() + "_" + Math.random().toString(36).slice(2,7),
+      ts: Date.now(),
+      label: label,
+      thumb: renderThumbnail(geo),
+      state: JSON.parse(JSON.stringify(state))
+    };
+    var list = loadRecents();
+    list.unshift(entry);
+    if(list.length > MAX_RECENTS) list = list.slice(0, MAX_RECENTS);
+    saveRecents(list);
+    renderRecentsList();
+  }
+
+  function loadRecentEntry(entry){
+    var merged = JSON.parse(JSON.stringify(DEFAULTS));
+    Object.keys(entry.state || {}).forEach(function(k){
+      if(k in merged) merged[k] = entry.state[k];
+    });
+    state = merged;
+    syncUIFromState();
+    refresh();
+    showToast("Loaded: " + entry.label);
+  }
+
+  function renderRecentsList(){
+    var list = loadRecents();
+    var wrap = $("recentsList");
+    var emptyEl = $("recentsEmpty");
+    var clearBtn = $("recentsClear");
+    wrap.innerHTML = "";
+    if(!list.length){
+      emptyEl.style.display = "block";
+      clearBtn.style.display = "none";
+      return;
+    }
+    emptyEl.style.display = "none";
+    clearBtn.style.display = "inline-block";
+    list.forEach(function(entry){
+      var card = document.createElement("div");
+      card.className = "recent-card";
+      card.innerHTML =
+        '<img class="recent-thumb" src="' + entry.thumb + '" alt="">' +
+        '<div class="recent-meta">' +
+          '<div class="recent-label">' + escapeHtml(entry.label) + '</div>' +
+          '<div class="recent-time">' + timeAgo(entry.ts) + '</div>' +
+        '</div>' +
+        '<button class="recent-del" title="Remove">×</button>';
+      card.addEventListener("click", function(){ loadRecentEntry(entry); });
+      card.querySelector(".recent-del").addEventListener("click", function(ev){
+        ev.stopPropagation();
+        saveRecents(loadRecents().filter(function(x){ return x.id !== entry.id; }));
+        renderRecentsList();
+      });
+      wrap.appendChild(card);
+    });
+  }
+
+  /* ============ URL state ============ */
+  var URL_KEYS = {
+    paperPreset:"ps", orientation:"or", customWIn:"cw", customHIn:"ch", unit:"u",
+    marginTopIn:"mt", marginRightIn:"mr", marginBottomIn:"mb", marginLeftIn:"ml",
+    style:"st", gridSizeIn:"gs", dotRadiusPt:"dr", lineWeightPt:"lw", gridColor:"gc",
+    autoFill:"af", cols:"c", rows:"r", borderEnabled:"bd", borderWeightPt:"bw",
+    borderMatch:"bm", borderColor:"bc", bgColor:"bg"
+  };
+  function encodeState(){
+    var params = new URLSearchParams();
+    Object.keys(URL_KEYS).forEach(function(key){
+      var v = state[key];
+      if(typeof v === "number") v = round(v,4);
+      if(typeof v === "boolean") v = v ? "1" : "0";
+      params.set(URL_KEYS[key], v);
+    });
+    return params.toString();
+  }
+  function decodeStateFromURL(){
+    var params = new URLSearchParams(window.location.search);
+    if(![...params.keys()].length) return false;
+    Object.keys(URL_KEYS).forEach(function(key){
+      var short = URL_KEYS[key];
+      if(!params.has(short)) return;
+      var raw = params.get(short);
+      var defVal = DEFAULTS[key];
+      if(typeof defVal === "number") state[key] = parseFloat(raw);
+      else if(typeof defVal === "boolean") state[key] = raw === "1";
+      else state[key] = raw;
+    });
+    return true;
+  }
+  var urlUpdateTimer = null;
+  function scheduleURLUpdate(){
+    clearTimeout(urlUpdateTimer);
+    urlUpdateTimer = setTimeout(function(){
+      var qs = encodeState();
+      history.replaceState(null, "", "?" + qs);
+    }, 400);
+  }
+
+  /* ============ Toast ============ */
+  var toastTimer = null;
+  function showToast(msg){
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+  }
+
+  /* ============ Theme ============ */
+  function applyTheme(theme){
+    document.documentElement.setAttribute("data-theme", theme);
+    $("themeToggle").textContent = theme === "dark" ? "☀️" : "🌙";
+    localStorage.setItem("gp_theme", theme);
+  }
+  function initTheme(){
+    var saved = localStorage.getItem("gp_theme");
+    if(saved){ applyTheme(saved); return; }
+    var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    applyTheme(prefersDark ? "dark" : "light");
+  }
+
+  /* ============ UI sync ============ */
+  function syncUIFromState(){
+    $("paperPreset").value = state.paperPreset;
+    $("customSizeRow").style.display = state.paperPreset === "Custom" ? "flex" : "none";
+    setVal("customW", fmt(toDisplay(state.customWIn)));
+    setVal("customH", fmt(toDisplay(state.customHIn)));
+
+    $("orientPortrait").classList.toggle("active", state.orientation === "portrait");
+    $("orientLandscape").classList.toggle("active", state.orientation === "landscape");
+    $("unitIn").classList.toggle("active", state.unit === "in");
+    $("unitCm").classList.toggle("active", state.unit === "cm");
+
+    setVal("marginTop", fmt(toDisplay(state.marginTopIn)));
+    setVal("marginRight", fmt(toDisplay(state.marginRightIn)));
+    setVal("marginBottom", fmt(toDisplay(state.marginBottomIn)));
+    setVal("marginLeft", fmt(toDisplay(state.marginLeftIn)));
+    $("linkMargins").classList.toggle("active", state.marginsLinked);
+
+    $("gridStyle").value = state.style;
+    $("gridSizeLabel").textContent = state.style === "lined" ? "Line spacing" : (state.style === "dot" ? "Dot spacing" : "Square size");
+    $("dotRadiusField").style.display = state.style === "dot" ? "flex" : "none";
+    setVal("gridSize", fmt(toDisplay(state.gridSizeIn)));
+    setVal("dotRadius", state.dotRadiusPt);
+    setVal("lineWeight", state.lineWeightPt);
+    document.querySelectorAll("[data-weight]").forEach(function(btn){
+      btn.classList.toggle("active", parseFloat(btn.dataset.weight) === state.lineWeightPt);
+    });
+    $("gridColorPicker").value = state.gridColor;
+    setVal("gridColorHex", state.gridColor);
+
+    $("autoFill").checked = state.autoFill;
+    $("colsInput").disabled = state.autoFill;
+    $("rowsInput").disabled = state.autoFill;
+    setVal("colsInput", state.cols);
+    setVal("rowsInput", state.rows);
+
+    $("borderEnabled").checked = state.borderEnabled;
+    $("borderOptions").style.display = state.borderEnabled ? "block" : "none";
+    setVal("borderWeight", state.borderWeightPt);
+    document.querySelectorAll("[data-borderweight]").forEach(function(btn){
+      btn.classList.toggle("active", parseFloat(btn.dataset.borderweight) === state.borderWeightPt);
+    });
+    $("borderMatch").checked = state.borderMatch;
+    $("borderColorField").style.display = state.borderMatch ? "none" : "flex";
+    $("borderColorPicker").value = state.borderColor;
+    setVal("borderColorHex", state.borderColor);
+
+    $("bgColorPicker").value = state.bgColor;
+    setVal("bgColorHex", state.bgColor);
+  }
+
+  function refresh(){
+    // keep cols/rows in sync with computed values when autoFill is on,
+    // so turning it off starts from a sane manual value
+    if(state.autoFill){
+      var g = buildGeometry();
+      state.cols = g.cols;
+      state.rows = g.rows;
+    }
+    renderCanvas();
+    scheduleURLUpdate();
+  }
+
+  /* ============ Wiring ============ */
+  function onNumberInput(id, applyFn){
+    var el = $(id);
+    el.addEventListener("input", function(){
+      var v = parseFloat(this.value);
+      if(isNaN(v)) return;
+      applyFn(v);
+      refresh();
+    });
+    // Reformat to the canonical rounded value once the user leaves the
+    // field (typing itself never reformats — see setVal — so a stray
+    // "0." or "1.50000" gets cleaned up on blur instead of mid-keystroke).
+    el.addEventListener("blur", function(){ syncUIFromState(); });
+  }
+
+  function setup(){
+    var hadURLState = decodeStateFromURL();
+
+    // Paper preset
+    $("paperPreset").addEventListener("change", function(){
+      state.paperPreset = this.value;
+      syncUIFromState(); refresh();
+    });
+    onNumberInput("customW", function(v){ state.customWIn = fromDisplay(v); });
+    onNumberInput("customH", function(v){ state.customHIn = fromDisplay(v); });
+
+    $("orientPortrait").addEventListener("click", function(){ state.orientation="portrait"; syncUIFromState(); refresh(); });
+    $("orientLandscape").addEventListener("click", function(){ state.orientation="landscape"; syncUIFromState(); refresh(); });
+
+    $("unitIn").addEventListener("click", function(){ state.unit="in"; syncUIFromState(); });
+    $("unitCm").addEventListener("click", function(){ state.unit="cm"; syncUIFromState(); });
+
+    // Margins
+    function marginHandler(field){
+      return function(v){
+        var inches = fromDisplay(v);
+        if(state.marginsLinked){
+          state.marginTopIn = state.marginRightIn = state.marginBottomIn = state.marginLeftIn = inches;
+        } else {
+          state[field] = inches;
+        }
+      };
+    }
+    onNumberInput("marginTop", function(v){ marginHandler("marginTopIn")(v); syncUIFromState(); });
+    onNumberInput("marginRight", function(v){ marginHandler("marginRightIn")(v); syncUIFromState(); });
+    onNumberInput("marginBottom", function(v){ marginHandler("marginBottomIn")(v); syncUIFromState(); });
+    onNumberInput("marginLeft", function(v){ marginHandler("marginLeftIn")(v); syncUIFromState(); });
+    $("linkMargins").addEventListener("click", function(){
+      state.marginsLinked = !state.marginsLinked;
+      if(state.marginsLinked){
+        var v = state.marginTopIn;
+        state.marginRightIn = state.marginBottomIn = state.marginLeftIn = v;
+      }
+      syncUIFromState(); refresh();
+    });
+
+    // Grid style
+    $("gridStyle").addEventListener("change", function(){
+      state.style = this.value;
+      syncUIFromState(); refresh();
+    });
+    onNumberInput("gridSize", function(v){ state.gridSizeIn = Math.max(0.02, fromDisplay(v)); });
+    onNumberInput("dotRadius", function(v){ state.dotRadiusPt = Math.max(0.1, v); });
+    onNumberInput("lineWeight", function(v){ state.lineWeightPt = Math.max(0.05, v); syncUIFromState(); });
+    document.querySelectorAll("[data-weight]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        state.lineWeightPt = parseFloat(this.dataset.weight);
+        syncUIFromState(); refresh();
+      });
+    });
+
+    // Colors
+    function wireColor(pickerId, hexId, applyFn){
+      $(pickerId).addEventListener("input", function(){ applyFn(this.value); $(hexId).value = this.value; refresh(); });
+      $(hexId).addEventListener("input", function(){
+        var v = this.value.trim();
+        if(!v.startsWith("#")) v = "#"+v;
+        if(isValidHex(v)){ applyFn(v); $(pickerId).value = v; refresh(); }
+      });
+    }
+    wireColor("gridColorPicker","gridColorHex", function(v){ state.gridColor = v; });
+    wireColor("bgColorPicker","bgColorHex", function(v){ state.bgColor = v; });
+    wireColor("borderColorPicker","borderColorHex", function(v){ state.borderColor = v; });
+
+    // Grid count
+    $("autoFill").addEventListener("change", function(){
+      state.autoFill = this.checked;
+      syncUIFromState(); refresh();
+    });
+    onNumberInput("colsInput", function(v){ state.cols = Math.max(1, Math.round(v)); });
+    onNumberInput("rowsInput", function(v){ state.rows = Math.max(1, Math.round(v)); });
+
+    // Border
+    $("borderEnabled").addEventListener("change", function(){
+      state.borderEnabled = this.checked;
+      syncUIFromState(); refresh();
+    });
+    onNumberInput("borderWeight", function(v){ state.borderWeightPt = Math.max(0.1, v); syncUIFromState(); });
+    document.querySelectorAll("[data-borderweight]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        state.borderWeightPt = parseFloat(this.dataset.borderweight);
+        syncUIFromState(); refresh();
+      });
+    });
+    $("borderMatch").addEventListener("change", function(){
+      state.borderMatch = this.checked;
+      syncUIFromState(); refresh();
+    });
+
+    // Actions
+    $("resetBtn").addEventListener("click", function(){
+      state = JSON.parse(JSON.stringify(DEFAULTS));
+      history.replaceState(null, "", window.location.pathname);
+      syncUIFromState(); refresh();
+      showToast("Reset to defaults");
+    });
+    $("shareBtn").addEventListener("click", function(){
+      var qs = encodeState();
+      var url = window.location.origin + window.location.pathname + "?" + qs;
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(function(){ showToast("Link copied to clipboard"); })
+          .catch(function(){ showToast(url); });
+      } else {
+        showToast(url);
+      }
+    });
+    $("downloadBtn").addEventListener("click", exportPDF);
+    $("recentsClear").addEventListener("click", function(){
+      saveRecents([]);
+      renderRecentsList();
+      showToast("Cleared recent papers");
+    });
+
+    // Zoom
+    $("zoomIn").addEventListener("click", function(){
+      zoom = (zoom === null ? 1 : zoom) * 1.2;
+      zoom = clamp(zoom, 0.1, 4);
+      renderCanvas();
+    });
+    $("zoomOut").addEventListener("click", function(){
+      zoom = (zoom === null ? 1 : zoom) / 1.2;
+      zoom = clamp(zoom, 0.1, 4);
+      renderCanvas();
+    });
+    $("zoomLabel").addEventListener("click", function(){ zoom = null; renderCanvas(); });
+
+    // Theme
+    $("themeToggle").addEventListener("click", function(){
+      var cur = document.documentElement.getAttribute("data-theme");
+      applyTheme(cur === "dark" ? "light" : "dark");
+    });
+
+    window.addEventListener("resize", function(){ if(zoom===null) renderCanvas(); });
+
+    initTheme();
+    syncUIFromState();
+    renderCanvas();
+    renderRecentsList();
+    if(hadURLState) showToast("Loaded shared design");
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", setup);
+  } else {
+    setup();
+  }
+})();
+</script>
+</body>
+</html>
