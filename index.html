@@ -374,6 +374,74 @@
     color:var(--text);
   }
 
+  .divider-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:7px 10px;
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    margin-bottom:6px;
+    font-size:12.5px;
+    background:var(--input-bg);
+  }
+  .divider-label{
+    color:var(--text);
+    font-weight:550;
+  }
+
+  .palette-cat{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--text-dim);
+    font-weight:650;
+    margin:14px 0 8px;
+  }
+  .palette-cat:first-child{ margin-top:0; }
+  .palette-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-bottom:4px;
+  }
+  .palette-swatch{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+    padding:8px;
+    border:1px solid var(--input-border);
+    border-radius:9px;
+    background:var(--input-bg);
+    cursor:pointer;
+    text-align:left;
+    font-family:var(--sans);
+  }
+  .palette-swatch:hover{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .palette-preview{
+    width:100%;
+    height:22px;
+    border-radius:6px;
+    border:1px solid rgba(0,0,0,.15);
+  }
+  .palette-name{
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--text);
+    line-height:1.25;
+  }
+  .palette-desc{
+    font-size:10.5px;
+    color:var(--text-dim);
+    font-style:italic;
+    margin-top:-4px;
+  }
+
   .action-bar{
     position:sticky;
     bottom:0;
@@ -579,6 +647,82 @@
         </div>
       </section>
 
+      <section class="group" id="columnsSection" style="display:none;">
+        <h2>Columns &amp; Sections</h2>
+        <button class="btn btn-secondary" id="cornellPresetBtn" style="margin-bottom:10px;">Cornell preset</button>
+
+        <div id="dividerRows"></div>
+        <p class="helper-text" id="dividerEmpty" style="margin-top:0;">No column dividers yet.</p>
+        <button class="btn btn-secondary" id="addDividerBtn" style="margin-bottom:14px;">+ Add column divider</button>
+
+        <div class="field-inline">
+          <label for="summaryEnabled">Bottom summary section</label>
+          <label class="switch">
+            <input type="checkbox" id="summaryEnabled">
+            <span class="track"></span>
+          </label>
+        </div>
+        <div id="summaryRow" style="display:none;" class="divider-row">
+          <span class="divider-label" id="summaryLabel">Summary line</span>
+        </div>
+
+        <p class="helper-text" style="margin-top:8px;margin-bottom:0;">Drag the heavier lines directly on the page preview to reposition them.</p>
+      </section>
+
+      <section class="group" id="squareColumnSection" style="display:none;">
+        <h2>Column Divider</h2>
+        <div class="field-inline">
+          <label for="squareColumnEnabled">Add column line</label>
+          <label class="switch">
+            <input type="checkbox" id="squareColumnEnabled">
+            <span class="track"></span>
+          </label>
+        </div>
+        <div id="squareColumnOptions" style="display:none;">
+          <div class="row">
+            <div class="field">
+              <label for="squareColumnCount">Squares from edge</label>
+              <input type="number" id="squareColumnCount" min="1" step="1">
+            </div>
+            <div class="field">
+              <label>Anchor</label>
+              <div class="unit-toggle">
+                <button data-anchor="left" id="anchorLeft">Left</button>
+                <button data-anchor="right" id="anchorRight">Right</button>
+              </div>
+            </div>
+          </div>
+          <p class="helper-text" id="squareColumnLabel" style="margin-top:0;">—</p>
+          <p class="helper-text" style="margin-top:-4px;margin-bottom:0;">Drag the thicker line directly on the page preview to reposition it.</p>
+        </div>
+      </section>
+
+      <section class="group" id="dividerStyleSection" style="display:none;">
+        <h2>Divider Line Style</h2>
+        <div class="field">
+          <label for="dividerWeight">Weight (pt)</label>
+          <div class="chip-row">
+            <input type="number" id="dividerWeight" min="0.1" step="0.05" style="max-width:90px;">
+            <button class="chip" id="dividerWeightAutoBtn">Auto</button>
+          </div>
+        </div>
+        <div class="field-inline">
+          <label for="dividerColorMatch">Match grid color</label>
+          <label class="switch">
+            <input type="checkbox" id="dividerColorMatch" checked>
+            <span class="track"></span>
+          </label>
+        </div>
+        <div class="field" id="dividerColorField" style="display:none;">
+          <label>Divider color</label>
+          <div class="color-field">
+            <input type="color" id="dividerColorPicker">
+            <input type="text" id="dividerColorHex" maxlength="7">
+          </div>
+        </div>
+        <p class="helper-text" style="margin-top:0;margin-bottom:0;">Defaults to the grid color, one weight step heavier than the grid lines.</p>
+      </section>
+
       <section class="group">
         <h2>Grid Count</h2>
         <div class="field-inline">
@@ -657,6 +801,15 @@
         <div id="recentsList"></div>
       </section>
 
+      <section class="group">
+        <div class="field-inline" id="paletteToggleHeader" style="margin-bottom:0;cursor:pointer;">
+          <h2 style="margin:0;">Color Palette Library</h2>
+          <span id="paletteChevron" style="color:var(--text-dim);font-size:11px;transition:transform .15s;display:inline-block;">▸</span>
+        </div>
+        <p class="helper-text" style="margin-top:4px;">Pick a combo to set the grid and background color at once.</p>
+        <div id="paletteBody" style="display:none;margin-top:4px;"></div>
+      </section>
+
     </div>
 
     <div class="controls" style="flex:0 0 auto;padding:14px 22px 20px;border-top:1px solid var(--panel-border);">
@@ -719,12 +872,24 @@
     borderWeightPt: 2.5,
     borderMatch: true,
     borderColor: "#333333",
-    bgColor: "#ffffff"
+    bgColor: "#ffffff",
+    columnDividers: [],
+    summaryEnabled: false,
+    summaryFrac: 0.78,
+    squareColumnEnabled: false,
+    squareColumnCount: 3,
+    squareColumnAnchor: "left",
+    dividerWeightAuto: true,
+    dividerWeightPt: 1.5,
+    dividerColorMatch: true,
+    dividerColor: "#8fb8e0"
   };
 
   var state = JSON.parse(JSON.stringify(DEFAULTS));
   var zoom = null; // null = fit
   var lastGeo = null;
+  var lastScale = 96; // px per inch, updated each render; used to hit-test drags
+  var dragState = null; // {type:"column", index} | {type:"summary"} | null
 
   /* ============ Helpers ============ */
   function $(id){ return document.getElementById(id); }
@@ -837,6 +1002,44 @@
       lines = lines.concat(diagonalFamily(150, spacing, offsetX, offsetY, gridW, gridH));
     }
 
+    // Cornell-style section dividers (lined style only): any number of
+    // vertical column dividers, plus one optional horizontal "summary"
+    // line near the bottom. Stored as fractions of the ruled area so they
+    // stay proportional if margins/paper size change. columnDividerXs is
+    // kept in the same order as state.columnDividers so drag handling can
+    // address a divider by index.
+    var dividerLines = [];
+    var columnDividerXs = [];
+    var summaryYAbs = null;
+    if(state.style === "lined"){
+      var vertBottom = offsetY + gridH;
+      if(state.summaryEnabled){
+        var sf = clamp(state.summaryFrac, 0.1, 0.95);
+        summaryYAbs = offsetY + sf*gridH;
+        vertBottom = summaryYAbs;
+        dividerLines.push([offsetX, summaryYAbs, offsetX+gridW, summaryYAbs]);
+      }
+      state.columnDividers.forEach(function(f){
+        var x = offsetX + clamp(f, 0.02, 0.98)*gridW;
+        columnDividerXs.push(x);
+        dividerLines.push([x, offsetY, x, vertBottom]);
+      });
+    }
+
+    // Square-grid column divider: one thicker vertical line, N full
+    // squares in from the left or right edge (snaps to grid lines rather
+    // than a free fraction, since "N squares from the edge" is the whole
+    // point for a square grid).
+    var squareColumnX = null;
+    if(state.style === "square" && state.squareColumnEnabled){
+      var maxCount = Math.max(1, cols-1);
+      var count = clamp(Math.round(state.squareColumnCount), 1, maxCount);
+      squareColumnX = state.squareColumnAnchor === "right"
+        ? offsetX + gridW - count*spacing
+        : offsetX + count*spacing;
+      dividerLines.push([squareColumnX, offsetY, squareColumnX, offsetY+gridH]);
+    }
+
     var border = null;
     if(state.borderEnabled){
       border = {
@@ -846,9 +1049,18 @@
       };
     }
 
+    // Divider line appearance (Cornell dividers + the square-grid column
+    // line): defaults to the grid color and twice the grid line weight,
+    // but either can be overridden independently.
+    var dividerWeightIn = (state.dividerWeightAuto ? state.lineWeightPt*2 : state.dividerWeightPt) / PT_PER_IN;
+    var dividerColor = state.dividerColorMatch ? state.gridColor : state.dividerColor;
+
     return {
       paperWIn: paperWIn, paperHIn: paperHIn,
       lines: lines, dots: dots, border: border,
+      dividerLines: dividerLines, columnDividerXs: columnDividerXs, summaryYAbs: summaryYAbs,
+      squareColumnX: squareColumnX, dividerWeightIn: dividerWeightIn, dividerColor: dividerColor,
+      ruled: {offsetX:offsetX, offsetY:offsetY, gridW:gridW, gridH:gridH},
       background: state.bgColor, gridColor: state.gridColor,
       lineWeightIn: state.lineWeightPt/PT_PER_IN,
       cols: cols, rows: rows
@@ -886,6 +1098,18 @@
       ctx.fillStyle = geo.gridColor;
       ctx.fill(pd);
     }
+    if(geo.dividerLines && geo.dividerLines.length){
+      var pdv = new Path2D();
+      for(var di=0;di<geo.dividerLines.length;di++){
+        var dl = geo.dividerLines[di];
+        pdv.moveTo(dl[0]*scale, dl[1]*scale);
+        pdv.lineTo(dl[2]*scale, dl[3]*scale);
+      }
+      ctx.strokeStyle = geo.dividerColor;
+      ctx.lineWidth = Math.max(1, geo.dividerWeightIn*scale);
+      ctx.lineCap = "square";
+      ctx.stroke(pdv);
+    }
     if(geo.border){
       ctx.strokeStyle = geo.border.color;
       ctx.lineWidth = Math.max(0.5, geo.border.weightIn*scale);
@@ -911,6 +1135,7 @@
       fitScale = zoom;
     }
     var scale = basePxPerIn * fitScale;
+    lastScale = scale;
     var dpr = window.devicePixelRatio || 1;
 
     canvas.style.width = (geo.paperWIn*scale) + "px";
@@ -973,6 +1198,15 @@
       for(var k=0;k<geo.dots.length;k++){
         var d = geo.dots[k];
         doc.circle(d[0]*PT_PER_IN, d[1]*PT_PER_IN, Math.max(d[2],0.01)*PT_PER_IN, "F");
+      }
+    }
+    if(geo.dividerLines && geo.dividerLines.length){
+      var gc3 = hexToRgb(geo.dividerColor);
+      doc.setDrawColor(gc3[0],gc3[1],gc3[2]);
+      doc.setLineWidth(Math.max(0.5, geo.dividerWeightIn*PT_PER_IN));
+      for(var di=0;di<geo.dividerLines.length;di++){
+        var dl = geo.dividerLines[di];
+        doc.line(dl[0]*PT_PER_IN, dl[1]*PT_PER_IN, dl[2]*PT_PER_IN, dl[3]*PT_PER_IN);
       }
     }
     if(geo.border){
@@ -1083,13 +1317,198 @@
     });
   }
 
+  /* ============ Cornell-style column/summary dividers ============ */
+  function renderDividerList(){
+    var wrap = $("dividerRows");
+    var emptyEl = $("dividerEmpty");
+    wrap.innerHTML = "";
+    if(!state.columnDividers.length){
+      emptyEl.style.display = "block";
+    } else {
+      emptyEl.style.display = "none";
+      state.columnDividers.forEach(function(frac, idx){
+        var row = document.createElement("div");
+        row.className = "divider-row";
+        row.innerHTML =
+          '<span class="divider-label">Column divider ' + (idx+1) + ' — ' + Math.round(frac*100) + '% from left</span>' +
+          '<button class="recent-del" title="Remove">×</button>';
+        row.querySelector(".recent-del").addEventListener("click", function(){
+          state.columnDividers.splice(idx,1);
+          renderDividerList();
+          refresh();
+        });
+        wrap.appendChild(row);
+      });
+    }
+    $("summaryRow").style.display = state.summaryEnabled ? "flex" : "none";
+    $("summaryLabel").textContent = "Summary line — " + Math.round(state.summaryFrac*100) + "% down the page";
+  }
+
+  /* ============ Square-grid column divider ============ */
+  function renderSquareColumnUI(){
+    $("squareColumnEnabled").checked = state.squareColumnEnabled;
+    $("squareColumnOptions").style.display = state.squareColumnEnabled ? "block" : "none";
+    setVal("squareColumnCount", state.squareColumnCount);
+    $("anchorLeft").classList.toggle("active", state.squareColumnAnchor === "left");
+    $("anchorRight").classList.toggle("active", state.squareColumnAnchor === "right");
+    $("squareColumnLabel").textContent = state.squareColumnCount + " square" + (state.squareColumnCount === 1 ? "" : "s") +
+      " from the " + state.squareColumnAnchor;
+  }
+
+  /* ============ Divider line style (shared by Cornell + square column) ============ */
+  function renderDividerStyleUI(){
+    var effectiveWeight = state.dividerWeightAuto ? round(state.lineWeightPt*2, 2) : state.dividerWeightPt;
+    setVal("dividerWeight", effectiveWeight);
+    $("dividerWeightAutoBtn").classList.toggle("active", state.dividerWeightAuto);
+    $("dividerColorMatch").checked = state.dividerColorMatch;
+    $("dividerColorField").style.display = state.dividerColorMatch ? "none" : "flex";
+    var previewColor = state.dividerColorMatch ? state.gridColor : state.dividerColor;
+    $("dividerColorPicker").value = previewColor;
+    setVal("dividerColorHex", previewColor);
+  }
+
+  /* ============ Color Palette Library ============ */
+  var PALETTE_LIBRARY = [
+    { cat: "🍎 Dark & Near-Black Red", swatches: [
+      { name:"Black Cherry", desc:"Near-Black Red", grid:"#211417", bg:"#110A0C" },
+      { name:"Volcanic Obsidian", desc:"Ember Red-Black", grid:"#241815", bg:"#130C0A" },
+      { name:"Cranberry Shadow", desc:"Rich Deep Red", grid:"#2D1A1E", bg:"#1A0D10" },
+      { name:"Spiced Cinnamon", desc:"Warm Brick Red", grid:"#2C1D18", bg:"#1B0E0A" },
+      { name:"Velvet Ruby", desc:"Saturated Dark Red", grid:"#331B20", bg:"#1E0C10" }
+    ]},
+    { cat: "⚫ The Near-Black", swatches: [
+      { name:"Obsidian", desc:"True Neutral Near-Black", grid:"#1E1E1E", bg:"#0E0E0E" },
+      { name:"Inkwell Black", desc:"Cool Blue Undertone", grid:"#1C2026", bg:"#0D0F12" },
+      { name:"Velvet Night", desc:"Deep Purple-Black", grid:"#1E1922", bg:"#0F0C11" },
+      { name:"Black Spruce", desc:"Deep Green-Teal-Black", grid:"#1A211E", bg:"#0C0F0E" },
+      { name:"Black Tea", desc:"Warm Espresso-Black", grid:"#231F1B", bg:"#12100E" }
+    ]},
+    { cat: "🔮 Dark Purple & Violet", swatches: [
+      { name:"Tyrian Royal", desc:"", grid:"#2B1A31", bg:"#180D1D" },
+      { name:"Mulberry Wine", desc:"", grid:"#2D1C2A", bg:"#1A0F18" },
+      { name:"Iris Shadow", desc:"", grid:"#252233", bg:"#15131F" },
+      { name:"Haunted Heather", desc:"", grid:"#2B2831", bg:"#1B191F" },
+      { name:"Violet Dust", desc:"", grid:"#221C33", bg:"#120E1E" }
+    ]},
+    { cat: "⏳ Faded Retro Nostalgia", swatches: [
+      { name:"Dusty Rose Wood", desc:"", grid:"#352B2D", bg:"#221B1C" },
+      { name:"Vintage Spruce", desc:"", grid:"#283533", bg:"#161F1E" },
+      { name:"Faded Mustard", desc:"", grid:"#323022", bg:"#1D1C13" },
+      { name:"Smoke Denim", desc:"Faded Blue-Gray", grid:"#2B3238", bg:"#191E21" },
+      { name:"Ash Olive", desc:"Muted Olive Drab", grid:"#30331F", bg:"#1C1E12" }
+    ]},
+    { cat: "🌌 Deep Space Cosmos", swatches: [
+      { name:"Supernova Magenta", desc:"", grid:"#35202E", bg:"#20121B" },
+      { name:"Solar Flare", desc:"Ember", grid:"#39231A", bg:"#23140E" },
+      { name:"Deep Nebula", desc:"", grid:"#202D3A", bg:"#111A24" },
+      { name:"Cosmic Teal", desc:"Nebula Cyan", grid:"#1A3433", bg:"#0E1F1E" },
+      { name:"Starlight Indigo", desc:"", grid:"#241F3A", bg:"#120F1F" }
+    ]},
+    { cat: "🔩 Industrial Metals", swatches: [
+      { name:"Gunmetal Steel", desc:"", grid:"#29313A", bg:"#181C20" },
+      { name:"Verdigris", desc:"Patina", grid:"#223330", bg:"#121C1A" },
+      { name:"Cast Brass", desc:"", grid:"#312D21", bg:"#1D1A13" },
+      { name:"Rust Copper", desc:"Oxidized Copper", grid:"#3A2A1E", bg:"#221811" },
+      { name:"Iron Slate", desc:"Cold Steel Gray", grid:"#2C2F33", bg:"#191B1D" }
+    ]},
+    { cat: "💎 Custom Gemstone", swatches: [
+      { name:"Imperial Jade", desc:"The Green", grid:"#1E3126", bg:"#111D16" },
+      { name:"Garnet Cabernet", desc:"The Red", grid:"#321E1E", bg:"#1D1111" },
+      { name:"Black Opal", desc:"The Teal/Green", grid:"#1A2F2E", bg:"#0E1B1A" },
+      { name:"Smokey Quartz", desc:"The Warm Brown", grid:"#2A231E", bg:"#191411" },
+      { name:"Imperial Topaz", desc:"The Amber/Gold", grid:"#2E2218", bg:"#1C140E" }
+    ]}
+  ];
+
+  function renderPaletteLibrary(){
+    var body = $("paletteBody");
+    var html = "";
+    PALETTE_LIBRARY.forEach(function(group){
+      html += '<div class="palette-cat">' + escapeHtml(group.cat) + '</div><div class="palette-grid">';
+      group.swatches.forEach(function(sw){
+        var titleText = sw.name + (sw.desc ? " — " + sw.desc : "");
+        html += '<button type="button" class="palette-swatch" data-grid="' + sw.grid + '" data-bg="' + sw.bg + '" title="' + escapeHtml(titleText) + '">' +
+          '<span class="palette-preview" style="background:linear-gradient(to right,' + sw.grid + ' 50%,' + sw.bg + ' 50%);"></span>' +
+          '<span class="palette-name">' + escapeHtml(sw.name) + '</span>' +
+          (sw.desc ? '<span class="palette-desc">' + escapeHtml(sw.desc) + '</span>' : '') +
+          '</button>';
+      });
+      html += '</div>';
+    });
+    body.innerHTML = html;
+    body.querySelectorAll(".palette-swatch").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        state.gridColor = btn.dataset.grid;
+        state.bgColor = btn.dataset.bg;
+        syncUIFromState();
+        refresh();
+        showToast("Applied: " + btn.querySelector(".palette-name").textContent);
+      });
+    });
+  }
+
+  function addColumnDivider(){
+    var fracs = state.columnDividers.slice().sort(function(a,b){ return a-b; });
+    var bounds = [0].concat(fracs, [1]);
+    var bestGap = -1, bestMid = 0.5;
+    for(var i=0;i<bounds.length-1;i++){
+      var gap = bounds[i+1]-bounds[i];
+      if(gap > bestGap){ bestGap = gap; bestMid = (bounds[i]+bounds[i+1])/2; }
+    }
+    state.columnDividers.push(bestMid);
+    // Keep the array sorted left-to-right: row index, drag-neighbor
+    // clamping, and visual order all rely on this invariant.
+    state.columnDividers.sort(function(a,b){ return a-b; });
+    renderDividerList();
+    refresh();
+  }
+
+  // Hit-tests a point (in page inches) against whatever is draggable for
+  // the current style — Cornell column/summary dividers for "lined", or
+  // the single column line for "square". Tolerance is in screen pixels
+  // converted to inches so it feels the same at any zoom level.
+  function hitTestDivider(xIn, yIn, geo){
+    if(!geo || !geo.ruled) return null;
+    var tolIn = 6 / lastScale;
+    var best = null, bestDist = tolIn;
+
+    if(state.style === "lined"){
+      if(geo.summaryYAbs !== null){
+        var withinX = xIn >= geo.ruled.offsetX - tolIn && xIn <= geo.ruled.offsetX + geo.ruled.gridW + tolIn;
+        var dist = Math.abs(yIn - geo.summaryYAbs);
+        if(withinX && dist <= bestDist){ best = {type:"summary"}; bestDist = dist; }
+      }
+      var vertBottom = geo.summaryYAbs !== null ? geo.summaryYAbs : (geo.ruled.offsetY + geo.ruled.gridH);
+      geo.columnDividerXs.forEach(function(x, idx){
+        var withinY = yIn >= geo.ruled.offsetY - tolIn && yIn <= vertBottom + tolIn;
+        var dist = Math.abs(xIn - x);
+        if(withinY && dist <= bestDist){ best = {type:"column", index:idx}; bestDist = dist; }
+      });
+    } else if(state.style === "square" && geo.squareColumnX !== null){
+      var withinY2 = yIn >= geo.ruled.offsetY - tolIn && yIn <= geo.ruled.offsetY + geo.ruled.gridH + tolIn;
+      var dist2 = Math.abs(xIn - geo.squareColumnX);
+      if(withinY2 && dist2 <= bestDist){ best = {type:"squareColumn"}; bestDist = dist2; }
+    }
+    return best;
+  }
+
+  function pointerToInches(e, canvas){
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) / lastScale,
+      y: (e.clientY - rect.top) / lastScale
+    };
+  }
+
   /* ============ URL state ============ */
   var URL_KEYS = {
     paperPreset:"ps", orientation:"or", customWIn:"cw", customHIn:"ch", unit:"u",
     marginTopIn:"mt", marginRightIn:"mr", marginBottomIn:"mb", marginLeftIn:"ml",
     style:"st", gridSizeIn:"gs", dotRadiusPt:"dr", lineWeightPt:"lw", gridColor:"gc",
     autoFill:"af", cols:"c", rows:"r", borderEnabled:"bd", borderWeightPt:"bw",
-    borderMatch:"bm", borderColor:"bc", bgColor:"bg"
+    borderMatch:"bm", borderColor:"bc", bgColor:"bg",
+    squareColumnEnabled:"sqe", squareColumnCount:"sqc", squareColumnAnchor:"sqa",
+    dividerWeightAuto:"dwa", dividerWeightPt:"dwp", dividerColorMatch:"dcm", dividerColor:"dc"
   };
   function encodeState(){
     var params = new URLSearchParams();
@@ -1099,6 +1518,11 @@
       if(typeof v === "boolean") v = v ? "1" : "0";
       params.set(URL_KEYS[key], v);
     });
+    // Arrays don't fit the generic scalar loop above, so the Cornell
+    // column dividers get their own comma-joined param.
+    params.set("cd", state.columnDividers.map(function(f){ return round(f,4); }).join(","));
+    params.set("se", state.summaryEnabled ? "1" : "0");
+    params.set("sf", round(state.summaryFrac,4));
     return params.toString();
   }
   function decodeStateFromURL(){
@@ -1113,6 +1537,15 @@
       else if(typeof defVal === "boolean") state[key] = raw === "1";
       else state[key] = raw;
     });
+    if(params.has("cd")){
+      var raw = params.get("cd");
+      state.columnDividers = raw ? raw.split(",").map(parseFloat).filter(function(n){ return !isNaN(n); }).sort(function(a,b){ return a-b; }) : [];
+    }
+    if(params.has("se")) state.summaryEnabled = params.get("se") === "1";
+    if(params.has("sf")){
+      var sfVal = parseFloat(params.get("sf"));
+      if(!isNaN(sfVal)) state.summaryFrac = sfVal;
+    }
     return true;
   }
   var urlUpdateTimer = null;
@@ -1168,6 +1601,13 @@
     $("gridStyle").value = state.style;
     $("gridSizeLabel").textContent = state.style === "lined" ? "Line spacing" : (state.style === "dot" ? "Dot spacing" : "Square size");
     $("dotRadiusField").style.display = state.style === "dot" ? "flex" : "none";
+    $("columnsSection").style.display = state.style === "lined" ? "block" : "none";
+    $("summaryEnabled").checked = state.summaryEnabled;
+    renderDividerList();
+    $("squareColumnSection").style.display = state.style === "square" ? "block" : "none";
+    renderSquareColumnUI();
+    $("dividerStyleSection").style.display = (state.style === "lined" || state.style === "square") ? "block" : "none";
+    renderDividerStyleUI();
     setVal("gridSize", fmt(toDisplay(state.gridSizeIn)));
     setVal("dotRadius", state.dotRadiusPt);
     setVal("lineWeight", state.lineWeightPt);
@@ -1281,6 +1721,52 @@
       });
     });
 
+    // Cornell-style columns & summary section (lined style only)
+    $("cornellPresetBtn").addEventListener("click", function(){
+      state.columnDividers = [0.3];
+      state.summaryEnabled = true;
+      state.summaryFrac = 0.78;
+      syncUIFromState();
+      refresh();
+      showToast("Cornell layout applied");
+    });
+    $("addDividerBtn").addEventListener("click", addColumnDivider);
+    $("summaryEnabled").addEventListener("change", function(){
+      state.summaryEnabled = this.checked;
+      renderDividerList();
+      refresh();
+    });
+
+    // Square-grid column divider
+    $("squareColumnEnabled").addEventListener("change", function(){
+      state.squareColumnEnabled = this.checked;
+      renderSquareColumnUI();
+      refresh();
+    });
+    onNumberInput("squareColumnCount", function(v){
+      state.squareColumnCount = Math.max(1, Math.round(v));
+      renderSquareColumnUI();
+    });
+    $("anchorLeft").addEventListener("click", function(){ state.squareColumnAnchor = "left"; renderSquareColumnUI(); refresh(); });
+    $("anchorRight").addEventListener("click", function(){ state.squareColumnAnchor = "right"; renderSquareColumnUI(); refresh(); });
+
+    // Divider line style (shared by Cornell dividers + the square column line)
+    onNumberInput("dividerWeight", function(v){
+      state.dividerWeightPt = Math.max(0.1, v);
+      state.dividerWeightAuto = false;
+      renderDividerStyleUI();
+    });
+    $("dividerWeightAutoBtn").addEventListener("click", function(){
+      state.dividerWeightAuto = true;
+      renderDividerStyleUI();
+      refresh();
+    });
+    $("dividerColorMatch").addEventListener("change", function(){
+      state.dividerColorMatch = this.checked;
+      renderDividerStyleUI();
+      refresh();
+    });
+
     // Colors
     function wireColor(pickerId, hexId, applyFn){
       $(pickerId).addEventListener("input", function(){ applyFn(this.value); $(hexId).value = this.value; refresh(); });
@@ -1290,9 +1776,10 @@
         if(isValidHex(v)){ applyFn(v); $(pickerId).value = v; refresh(); }
       });
     }
-    wireColor("gridColorPicker","gridColorHex", function(v){ state.gridColor = v; });
+    wireColor("gridColorPicker","gridColorHex", function(v){ state.gridColor = v; renderDividerStyleUI(); });
     wireColor("bgColorPicker","bgColorHex", function(v){ state.bgColor = v; });
     wireColor("borderColorPicker","borderColorHex", function(v){ state.borderColor = v; });
+    wireColor("dividerColorPicker","dividerColorHex", function(v){ state.dividerColor = v; });
 
     // Grid count
     $("autoFill").addEventListener("change", function(){
@@ -1343,6 +1830,15 @@
       showToast("Cleared recent papers");
     });
 
+    // Color palette library (collapsed by default — optional)
+    $("paletteToggleHeader").addEventListener("click", function(){
+      var body = $("paletteBody");
+      var isOpen = body.style.display !== "none";
+      body.style.display = isOpen ? "none" : "block";
+      $("paletteChevron").style.transform = isOpen ? "rotate(0deg)" : "rotate(90deg)";
+    });
+    renderPaletteLibrary();
+
     // Zoom
     $("zoomIn").addEventListener("click", function(){
       zoom = (zoom === null ? 1 : zoom) * 1.2;
@@ -1355,6 +1851,66 @@
       renderCanvas();
     });
     $("zoomLabel").addEventListener("click", function(){ zoom = null; renderCanvas(); });
+
+    // Drag column/summary dividers directly on the preview (lined and
+    // square styles only — the other styles have nothing draggable).
+    function isDraggableStyle(){ return state.style === "lined" || state.style === "square"; }
+    var canvasEl = $("paperCanvas");
+    canvasEl.addEventListener("pointerdown", function(e){
+      if(!isDraggableStyle()) return;
+      var pt = pointerToInches(e, canvasEl);
+      var hit = hitTestDivider(pt.x, pt.y, lastGeo);
+      if(!hit) return;
+      dragState = hit;
+      try{ canvasEl.setPointerCapture(e.pointerId); }catch(err){}
+      canvasEl.style.cursor = hit.type === "summary" ? "row-resize" : "col-resize";
+      e.preventDefault();
+    });
+    canvasEl.addEventListener("pointermove", function(e){
+      if(dragState && !isDraggableStyle()){ dragState = null; }
+      var pt = pointerToInches(e, canvasEl);
+      if(dragState){
+        var geo = lastGeo;
+        if(!geo || !geo.ruled){ return; }
+        if(dragState.type === "summary"){
+          var frac = (pt.y - geo.ruled.offsetY) / geo.ruled.gridH;
+          state.summaryFrac = clamp(frac, 0.1, 0.95);
+          renderDividerList();
+        } else if(dragState.type === "column"){
+          var idx = dragState.index;
+          var minGap = 0.03;
+          var prevBound = idx > 0 ? state.columnDividers[idx-1] : 0;
+          var nextBound = idx < state.columnDividers.length-1 ? state.columnDividers[idx+1] : 1;
+          var fracX = (pt.x - geo.ruled.offsetX) / geo.ruled.gridW;
+          state.columnDividers[idx] = clamp(fracX, prevBound+minGap, nextBound-minGap);
+          renderDividerList();
+        } else if(dragState.type === "squareColumn"){
+          var spacingForDrag = geo.ruled.gridW / geo.cols;
+          var countRaw = state.squareColumnAnchor === "right"
+            ? (geo.ruled.offsetX + geo.ruled.gridW - pt.x) / spacingForDrag
+            : (pt.x - geo.ruled.offsetX) / spacingForDrag;
+          var maxCount = Math.max(1, geo.cols - 1);
+          state.squareColumnCount = clamp(Math.round(countRaw), 1, maxCount);
+          renderSquareColumnUI();
+        }
+        renderCanvas();
+        scheduleURLUpdate();
+        e.preventDefault();
+      } else if(isDraggableStyle()){
+        var hoverHit = hitTestDivider(pt.x, pt.y, lastGeo);
+        canvasEl.style.cursor = hoverHit ? (hoverHit.type === "summary" ? "row-resize" : "col-resize") : "default";
+      } else {
+        canvasEl.style.cursor = "default";
+      }
+    });
+    function endDrag(e){
+      if(dragState){
+        dragState = null;
+        try{ canvasEl.releasePointerCapture(e.pointerId); }catch(err){}
+      }
+    }
+    canvasEl.addEventListener("pointerup", endDrag);
+    canvasEl.addEventListener("pointercancel", endDrag);
 
     // Theme
     $("themeToggle").addEventListener("click", function(){
